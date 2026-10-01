@@ -1,0 +1,15 @@
+{
+	"name": "adf-retailSalesProject",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "canadacentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "7b40fa9d-c85a-42e2-805e-d49ca600d952",
+		"tenantId": "f39b356c-8084-45cf-9f18-d54973c2563e"
+	}
+}
