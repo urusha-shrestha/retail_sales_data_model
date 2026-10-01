@@ -115,142 +115,156 @@
 						}
 					},
 					{
-						"name": "CopyIncrementalOrders",
-						"type": "Copy",
+						"name": "If Condition2",
+						"type": "IfCondition",
 						"dependsOn": [
-							{
-								"activity": "LookupLastWatermark",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							},
 							{
 								"activity": "LookupNewWatermark",
 								"dependencyConditions": [
 									"Succeeded"
 								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderStoredProcedureName": "[[dbo].[usp_GetIncrementalData]",
-								"storedProcedureParameters": {
-									"NewWatermark": {
-										"type": "DateTime",
-										"value": {
-											"value": "@activity('LookupNewWatermark').output.firstRow.new_watermark",
-											"type": "Expression"
-										}
-									},
-									"OldWatermark": {
-										"type": "DateTime",
-										"value": {
-											"value": "@activity('LookupLastWatermark').output.firstRow.last_watermark",
-											"type": "Expression"
-										}
-									},
-									"TableName": {
-										"type": "String",
-										"value": "orders"
-									}
-								},
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
 							},
-							"sink": {
-								"type": "DelimitedTextSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "DelimitedTextWriteSettings",
-									"quoteAllText": true,
-									"fileExtension": ".txt"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
 							{
-								"referenceName": "ds_azure_sql",
-								"type": "DatasetReference",
-								"parameters": {
-									"p_file": "orders"
-								}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ds_raw_files",
-								"type": "DatasetReference",
-								"parameters": {
-									"p_file": {
-										"value": "@concat(\n    'orders_',\n    formatDateTime(utcNow(), 'yyyyMMdd_HHmmss'),\n    '_',\n    pipeline().RunId\n)",
-										"type": "Expression"
-									},
-									"p_directory": {
-										"value": "@concat('incremental/orders/',\nformatDateTime(utcNow(),'yyyyMMdd'))",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					},
-					{
-						"name": "UpdateWatermark",
-						"type": "SqlServerStoredProcedure",
-						"dependsOn": [
-							{
-								"activity": "CopyIncrementalOrders",
+								"activity": "LookupLastWatermark",
 								"dependencyConditions": [
 									"Succeeded"
 								]
 							}
 						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
 						"userProperties": [],
 						"typeProperties": {
-							"storedProcedureName": "[[dbo].[usp_UpdateWatermark]",
-							"storedProcedureParameters": {
-								"NewWatermark": {
-									"value": {
-										"value": "@activity('LookupNewWatermark').output.firstRow.new_watermark",
-										"type": "Expression"
+							"expression": {
+								"value": "@greater(activity('LookupNewWatermark').output.firstRow.new_watermark,activity('LookupLastWatermark').output.firstRow.last_watermark)",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "CopyIncrementalOrders",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
 									},
-									"type": "DateTime"
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderStoredProcedureName": "[[dbo].[usp_GetIncrementalData]",
+											"storedProcedureParameters": {
+												"NewWatermark": {
+													"type": "String",
+													"value": {
+														"value": "@activity('LookupNewWatermark').output.firstRow.new_watermark",
+														"type": "Expression"
+													}
+												},
+												"OldWatermark": {
+													"type": "String",
+													"value": {
+														"value": "@activity('LookupLastWatermark').output.firstRow.last_watermark",
+														"type": "Expression"
+													}
+												},
+												"TableName": {
+													"type": "String",
+													"value": "orders"
+												}
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_azure_sql",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_file": "orders"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_raw_files",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_file": {
+													"value": "@concat(\n    'orders_',\n    formatDateTime(utcNow(), 'yyyyMMdd_HHmmss'),\n    '_',\n    pipeline().RunId\n)",
+													"type": "Expression"
+												},
+												"p_directory": {
+													"value": "@concat('incremental/orders/',\nformatDateTime(utcNow(),'yyyyMMdd'))",
+													"type": "Expression"
+												}
+											}
+										}
+									]
 								},
-								"TableName": {
-									"value": "orders",
-									"type": "String"
+								{
+									"name": "UpdateWatermark",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "CopyIncrementalOrders",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[usp_UpdateWatermark]",
+										"storedProcedureParameters": {
+											"NewWatermark": {
+												"value": {
+													"value": "@activity('LookupNewWatermark').output.firstRow.new_watermark",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"TableName": {
+												"value": "orders",
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "ls_azuresql",
+										"type": "LinkedServiceReference"
+									}
 								}
-							}
-						},
-						"linkedServiceName": {
-							"referenceName": "ls_azuresql",
-							"type": "LinkedServiceReference"
+							]
 						}
 					}
 				],
