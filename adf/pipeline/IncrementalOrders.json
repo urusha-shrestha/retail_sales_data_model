@@ -102,7 +102,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
-						"sqlReaderStoredProcedureName": "[dbo].[usp_GetIncrementalOrders]",
+						"sqlReaderStoredProcedureName": "[dbo].[usp_GetIncrementalData]",
 						"storedProcedureParameters": {
 							"NewWatermark": {
 								"type": "DateTime",
