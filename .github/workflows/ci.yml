@@ -1,0 +1,43 @@
+name: Retail Data CI
+
+on:
+  push:
+    branches:
+      - main
+      - add-ci-pipeline
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-notebooks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install notebook validator
+        run: pip install nbformat
+
+      - name: Validate Jupyter notebooks
+        run: |
+          python - << 'PY'
+          import glob
+          import nbformat
+
+          notebooks = glob.glob('retailSalesProject/**/*.ipynb', recursive=True)
+
+          if not notebooks:
+            raise SystemExit('No notebooks found.')
+
+          for notebook in notebooks:
+            nbformat.read(notebook, as_version=4)
+            print(f"Validated: {notebook}")
+
+          print(f"Successfully validated {len(notebooks)} notebook{s}.")
+          PY
