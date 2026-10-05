@@ -39,5 +39,5 @@ jobs:
             nbformat.read(notebook, as_version=4)
             print(f"Validated: {notebook}")
 
-          print(f"Successfully validated {len(notebooks)} notebook{s}.")
+          print(f"Successfully validated {len(notebooks)} notebook(s).")
           PY
