@@ -41,3 +41,35 @@ jobs:
 
           print(f"Successfully validated {len(notebooks)} notebook(s).")
           PY
+      - name: Check Python syntax in notebooks
+        run: |
+          python - << 'PY'
+          import ast
+          import glob
+          import nbformat
+
+          notebooks = glob.glob('retailSalesProject/**/*.ipynb', recursive=True)
+
+          for notebook_path in notebooks:
+            notebook = nbformat.read(notebook_path, as_version=4)
+
+            for index, cell in enumerate(notebook.cells):
+              if cell.cell_type != 'code':
+                continue
+
+              code = cell.source
+
+              # Skip Databricks/Jupyter magic commands
+              if code.lstrip().startswith(("%", "!")):
+                continue
+
+              try:
+                ast.parse(code)
+              except SyntaxError as error:
+                print(f"Syntax error in {notebook_path}, code cell {index + 1}")
+                print(error)
+                raise
+
+            print(f"Python syntax valid: {notebook_path}")
+          print("Python syntax validation completed successfully.")
+          PY
